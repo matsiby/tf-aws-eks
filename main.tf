@@ -38,6 +38,8 @@ module "vpc" {
 }
 
 module "eks" {
+
+  depends_on = [aws_cloudwatch_log_group.task-exec-cluster-log]
   source  = "terraform-aws-modules/eks/aws"
   version = "20.8.5"
 
@@ -58,7 +60,6 @@ module "eks" {
 
   eks_managed_node_group_defaults = {
     ami_type = "AL2_x86_64"
-
   }
 
   eks_managed_node_groups = {
@@ -82,6 +83,14 @@ module "eks" {
       desired_size = 1
     }
   }
+
+  enabled_cluster_log_types = ["api", "audit"]
+  name                      = "task-execution-cluster"
+}
+
+resource "aws_cloudwatch_log_group" "task-exec-cluster-log" {
+  name              = "/aws/eks/task-execution-cluster/cluster"
+  retention_in_days = 7
 }
 
 data "aws_iam_policy" "ebs_csi_policy" {
